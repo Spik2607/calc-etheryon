@@ -1,11 +1,13 @@
 'use client';
 
-import EtheryonCalculator from '../components/EtheryonCalculator';
+import EtheryonCalculator from '@/components/EtheryonCalculator';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
-      <EtheryonCalculator />
-    </main>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4">
+        <EtheryonCalculator />
+      </div>
+    </div>
   );
 }
