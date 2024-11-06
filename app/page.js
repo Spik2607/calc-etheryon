@@ -1,8 +1,9 @@
+cat > app/page.js << 'EOL'
 'use client';
 
-import EtheryonCalculator from '@/components/EtheryonCalculator';
+import EtheryonCalculator from '../components/EtheryonCalculator';
 
-function Home() {
+export default function Home() {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto p-4">
@@ -11,5 +12,4 @@ function Home() {
     </div>
   );
 }
-
-export default Home;
+EOL
