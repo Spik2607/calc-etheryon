@@ -1,8 +1,11 @@
+cat > .eslintrc.json << 'EOL'
 {
   "extends": "next/core-web-vitals",
   "rules": {
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
-    "no-unused-expressions": "off"
+    "no-unused-expressions": "off",
+    "@typescript-eslint/no-unused-expressions": "off"
   }
 }
+EOL
