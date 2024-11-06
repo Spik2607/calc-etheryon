@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 const elements = ['Eau', 'Feu', 'Terre', 'Air', 'Foudre'];
 
 const EtheryonCalculator = () => {
-  // États
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [playerCount, setPlayerCount] = useState(3);
