@@ -1,15 +1,14 @@
-import dynamic from 'next/dynamic';
+'use client';
 
-const EtheryonCalculator = dynamic(() => import('../components/EtheryonCalculator'), {
-  ssr: false
-});
+import { Suspense } from 'react';
+import EtheryonCalculator from '@/components/EtheryonCalculator';
 
 export default function Home() {
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto p-4">
+      <Suspense fallback={<div>Chargement...</div>}>
         <EtheryonCalculator />
-      </div>
+      </Suspense>
     </div>
   );
 }
