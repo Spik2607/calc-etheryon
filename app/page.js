@@ -1,14 +1,15 @@
 'use client';
 
-import { Suspense } from 'react';
 import EtheryonCalculator from '@/components/EtheryonCalculator';
 
-export default function Home() {
+function Home() {
   return (
     <div className="min-h-screen">
-      <Suspense fallback={<div>Chargement...</div>}>
+      <div className="container mx-auto p-4">
         <EtheryonCalculator />
-      </Suspense>
+      </div>
     </div>
   );
 }
+
+export default Home;
