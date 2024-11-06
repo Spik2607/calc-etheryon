@@ -1,4 +1,3 @@
-cat > app/page.js << 'EOL'
 'use client';
 
 import EtheryonCalculator from '../components/EtheryonCalculator';
@@ -12,4 +11,3 @@ export default function Home() {
     </div>
   );
 }
-EOL
