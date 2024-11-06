@@ -1,18 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { ScrollArea } from './ui/scroll-area';
+import { Checkbox } from './ui/checkbox';
+import { Switch } from './ui/switch';
 import { SunIcon, MoonIcon } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const elements = ['Eau', 'Feu', 'Terre', 'Air', 'Foudre'];
 
 const EtheryonCalculator = () => {
+  // États
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [playerCount, setPlayerCount] = useState(3);
@@ -36,7 +37,7 @@ const EtheryonCalculator = () => {
     }
   }, [darkMode]);
 
-  // Initialisation du jeu
+  // Gestionnaires d'événements
   const handlePlayerCountChange = (count) => {
     setPlayerCount(count);
     setPlayerNames(prev => {
@@ -72,7 +73,7 @@ const EtheryonCalculator = () => {
     setGameStarted(true);
   };
 
-  // Calcul des scores
+  // Calculs de scores
   const calculateFinalScore = (elementScores) => {
     if (!elementScores || elementScores.length === 0) return 0;
     const maxElement = Math.max(...elementScores);
@@ -110,7 +111,7 @@ const EtheryonCalculator = () => {
     });
   };
 
-  // Gestion des bonus de maîtrise
+  // Gestion des bonus
   const toggleMasteryBonus = (roundIndex, playerIndex) => {
     setMasteryBonus(prev => {
       const newMasteryBonus = [...prev];
@@ -142,7 +143,6 @@ const EtheryonCalculator = () => {
     ));
   };
 
-  // Calcul des totaux et du gagnant
   const calculateTotal = (playerIndex) => {
     return (scores[playerIndex] || []).reduce((sum, score) => sum + (score || 0), 0);
   };
@@ -167,7 +167,7 @@ const EtheryonCalculator = () => {
     }
   };
 
-  // Rendu des éléments de l'interface
+  // Components de rendu
   const renderElementInputs = (playerIndex, roundIndex) => (
     <div className="grid grid-cols-5 gap-2">
       {elements.map((element, elementIndex) => (
@@ -370,7 +370,7 @@ const EtheryonCalculator = () => {
               </Button>
             </CardContent>
           </Card>
-        ) : gameEnded ? (
+       ) : gameEnded ? (
           <Card className="w-full max-w-4xl mx-auto">
             <CardHeader>
               <CardTitle>Résultats finaux</CardTitle>
