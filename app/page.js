@@ -1,11 +1,15 @@
-'use client';
+import dynamic from 'next/dynamic';
 
-import EtheryonCalculator from '../components/EtheryonCalculator';
+const EtheryonCalculator = dynamic(() => import('../components/EtheryonCalculator'), {
+  ssr: false
+});
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <EtheryonCalculator />
-    </main>
+    <div className="min-h-screen">
+      <div className="container mx-auto p-4">
+        <EtheryonCalculator />
+      </div>
+    </div>
   );
 }
