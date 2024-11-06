@@ -1,4 +1,3 @@
-cat > .eslintrc.json << 'EOL'
 {
   "extends": "next/core-web-vitals",
   "rules": {
@@ -8,4 +7,3 @@ cat > .eslintrc.json << 'EOL'
     "@typescript-eslint/no-unused-expressions": "off"
   }
 }
-EOL
