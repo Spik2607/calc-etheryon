@@ -1,11 +1,17 @@
 {
-  "presets": ["next/babel"],
+  "presets": [
+    ["next/babel", {
+      "preset-env": {},
+      "transform-runtime": {},
+      "styled-jsx": {},
+      "class-properties": {}
+    }]
+  ],
   "plugins": [
-    [
-      "@babel/plugin-transform-runtime",
-      {
-        "regenerator": true
-      }
-    ]
+    ["@babel/plugin-transform-runtime", {
+      "regenerator": true,
+      "helpers": true,
+      "useESModules": false
+    }]
   ]
 }
