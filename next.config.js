@@ -1,28 +1,31 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   reactStrictMode: true,
-  webpack: (config, { isServer }) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false,
-    };
-
+  webpack: (config) => {
+    // Configuration existante
     config.module.rules.push({
       test: /\.(js|jsx)$/,
-      exclude: /node_modules/,
       use: {
         loader: 'babel-loader',
         options: {
-          presets: ['next/babel'],
+          presets: ['@babel/preset-env', '@babel/preset-react'],
           plugins: ['@babel/plugin-transform-runtime']
         }
-      }
+      },
+      exclude: /node_modules/,
     });
 
-    return config;
-  }
-};
+    // Ajout de la résolution pour ajv
+    config.resolve = {
+      ...config.resolve,
+      alias: {
+        ...config.resolve.alias,
+        '@jv': 'ajv'
+      }
+    };
 
-module.exports = nextConfig;
+    return config;
+  },
+}
+
+module.exports = nextConfig
