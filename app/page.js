@@ -1,11 +1,13 @@
-const Page = () => {
-  const content = "Hello";
-  
+'use client';
+
+import { EtheryonCalculator } from '../components/EtheryonCalculator';
+
+export default function Page() {
   return (
-    <div>
-      {content}
+    <div className="min-h-screen">
+      <div className="container mx-auto p-4">
+        <EtheryonCalculator />
+      </div>
     </div>
   );
-};
-
-export default Page;
+}
