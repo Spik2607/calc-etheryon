@@ -1,11 +1,5 @@
-"use client"
-
-const Page = () => {
-  return (
-    <div>
-      Hello World
-    </div>
-  );
-};
+function Page() {
+  return <div>Hello</div>;
+}
 
 export default Page;
