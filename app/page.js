@@ -1,13 +1,11 @@
 'use client';
 
-import { EtheryonCalculator } from '../components/EtheryonCalculator';
-
-function Home() {
+export default function Home() {
+  const EtheryonCalculator = require('../components/EtheryonCalculator').default;
+  
   return (
-    <main>
+    <div className="min-h-screen">
       <EtheryonCalculator />
-    </main>
+    </div>
   );
 }
-
-export default Home;
