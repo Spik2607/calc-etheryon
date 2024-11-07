@@ -1,9 +1,13 @@
 module.exports = {
-  extends: ['next/core-web-vitals'],
+  root: true,
+  env: {
+    browser: true,
+    node: true,
+  },
+  extends: ['next', 'next/core-web-vitals'],
   rules: {
-    'no-unused-vars': 'off',
+    'react/no-unescaped-entities': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
-    'no-unused-expressions': 'off',
-    '@typescript-eslint/no-unused-expressions': 'off'
+    'no-unused-vars': 'off'
   }
 };
