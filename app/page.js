@@ -1,7 +1,11 @@
-function Page() {
+"use client"
+
+const Page = () => {
   return (
-    <div>Hello</div>
+    <div>
+      Hello World
+    </div>
   );
-}
+};
 
 export default Page;
