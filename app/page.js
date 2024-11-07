@@ -1,13 +1,13 @@
-'use client';
-
-import { EtheryonCalculator } from '../components/EtheryonCalculator';
-
-export default function Page() {
-  return (
-    <div className="min-h-screen">
-      <div className="container mx-auto p-4">
-        <EtheryonCalculator />
-      </div>
-    </div>
-  );
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  output: 'export',
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  }
 }
+
+module.exports = nextConfig
