@@ -1,9 +1,15 @@
-import EtheryonCalculator from '@/components/EtheryonCalculator'
+cat > app/page.js << 'EOL'
+'use client';
+
+import EtheryonCalculator from '../components/EtheryonCalculator';
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <EtheryonCalculator />
-    </main>
-  )
+    <div className="min-h-screen">
+      <div className="container mx-auto p-4">
+        <EtheryonCalculator />
+      </div>
+    </div>
+  );
 }
+EOL
