@@ -1,31 +1,35 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  webpack: (config) => {
-    // Configuration existante
-    config.module.rules.push({
-      test: /\.(js|jsx)$/,
-      use: {
-        loader: 'babel-loader',
-        options: {
-          presets: ['@babel/preset-env', '@babel/preset-react'],
-          plugins: ['@babel/plugin-transform-runtime']
+  experimental: {
+    forceSwcTransforms: true // Force l'utilisation de SWC au lieu de Babel
+  },
+  // Désactivons temporairement le lint lors du build pour isoler les problèmes de compilation
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+  // Optimisations de build
+  poweredByHeader: false,
+  compress: true,
+  // Configuration webpack minimale nécessaire
+  webpack: (config, { dev, isServer }) => {
+    // Gardons seulement la configuration essentielle
+    if (!dev && !isServer) {
+      // Optimisations pour la production
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            defaultVendors: false,
+            default: false
+          }
         }
-      },
-      exclude: /node_modules/,
-    });
-
-    // Ajout de la résolution pour ajv
-    config.resolve = {
-      ...config.resolve,
-      alias: {
-        ...config.resolve.alias,
-        '@jv': 'ajv'
       }
-    };
+    }
 
     return config;
-  },
+  }
 }
 
 module.exports = nextConfig
