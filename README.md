@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Calculatrice Etheryon
 
-## Getting Started
+Une calculatrice spécialisée pour le jeu Etheryon, permettant de :
 
-First, run the development server:
+- Calculer les scores basés sur les éléments (Eau, Feu, Terre, Air, Foudre)
+- Gérer les bonus de maîtrise (+15 points)
+- Supporter le mode équipe
+- Suivre les scores sur plusieurs manches
+
+## Fonctionnalités
+
+- ⚡ Calcul automatique des scores en fonction des éléments
+- 🌟 Gestion des bonus de maîtrise (+15 points)
+- 👥 Mode équipe
+- 🌓 Interface sombre/claire adaptative
+- 📊 Historique des scores par manche
+- 🏆 Vue des résultats finaux
+
+## Utilisation
+
+Visitez [https://spik2607.github.io/calc-etheryon/](https://spik2607.github.io/calc-etheryon/) pour utiliser la calculatrice en ligne.
+
+### Comment jouer
+
+1. Choisissez le nombre de joueurs (2-8)
+2. Activez le mode équipe si nécessaire
+3. Entrez les noms des joueurs
+4. Pour chaque manche :
+   - Entrez les points des éléments
+   - Attribuez les bonus de maîtrise
+   - Passez au joueur suivant
+
+## Développement
 
 ```bash
+# Installation des dépendances
+npm install --legacy-peer-deps
+
+# Lancement en mode développement
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Construction pour production
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Structure du projet
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+calc-etheryon/
+├── app/
+│   ├── globals.css
+│   ├── layout.js
+│   └── page.js
+├── components/
+│   ├── EtheryonCalculator.js
+│   └── ui/
+├── lib/
+│   └── utils.js
+└── public/
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Technologies utilisées
 
-## Learn More
+- Next.js 14
+- React 18
+- Tailwind CSS
+- Radix UI
+- Lucide Icons
 
-To learn more about Next.js, take a look at the following resources:
+## Licence
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+MIT
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Développé avec ❤️ pour la communauté Etheryon
