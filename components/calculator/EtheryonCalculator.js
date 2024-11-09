@@ -1,307 +1,368 @@
 'use client'
 
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import Image from 'next/image'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState, useCallback, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Shield, Sword, Star, Crown, Heart } from 'lucide-react'
-import '../styles/theme.css'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Shield, Sword, Star, Crown, Heart, ChevronRight, Award } from 'lucide-react'
 
 const elements = [
-  { name: 'Eau', icon: '💧' },
-  { name: 'Feu', icon: '🔥' },
-  { name: 'Terre', icon: '🌍' },
-  { name: 'Air', icon: '🌪️' },
-  { name: 'Foudre', icon: '⚡' }
+  { name: 'Eau', icon: '💧', color: 'text-blue-500' },
+  { name: 'Feu', icon: '🔥', color: 'text-red-500' },
+  { name: 'Terre', icon: '🌍', color: 'text-green-500' },
+  { name: 'Air', icon: '🌪️', color: 'text-gray-500' },
+  { name: 'Foudre', icon: '⚡', color: 'text-yellow-500' }
 ]
 
+const MAX_PLAYERS = 8
+const MAX_ROUNDS = 7
+const MASTERY_BONUS = 15
+
+const initialGameState = {
+  started: false,
+  ended: false,
+  playerCount: 3,
+  currentPlayer: 0,
+  currentRound: 1,
+  playerNames: Array(MAX_PLAYERS).fill(''),
+  elementScores: [],
+  scores: [],
+  masteryBonus: Array(MAX_ROUNDS).fill(-1)
+}
+
 const EtheryonCalculator = () => {
-  const [gameStarted, setGameStarted] = useState(false)
-  const [playerCount, setPlayerCount] = useState(3)
-  const [playerNames, setPlayerNames] = useState(Array(8).fill(''))
-  const [elementScores, setElementScores] = useState([])
-  const [currentPlayer, setCurrentPlayer] = useState(0)
-  const [currentRound, setCurrentRound] = useState(1)
-  const [scores, setScores] = useState([])
-  const [masteryBonus, setMasteryBonus] = useState([])
+  // État global du jeu
+  const [gameState, setGameState] = useState({ ...initialGameState })
+  
+  // Déstructuration pour plus de clarté
+  const {
+    started: gameStarted,
+    ended: gameEnded,
+    playerCount,
+    currentPlayer,
+    currentRound,
+    playerNames,
+    elementScores,
+    scores,
+    masteryBonus
+  } = gameState
 
-  // Fonctions de gestion
-  const handlePlayerCountChange = (count) => {
-    setPlayerCount(count)
-    setPlayerNames(prev => {
-      const newNames = [...prev]
-      newNames.length = count
-      return newNames.fill('', prev.length, count)
-    })
-  }
+  // Gestionnaires d'événements optimisés
+  const handlePlayerCountChange = useCallback((count) => {
+    setGameState(prev => ({
+      ...prev,
+      playerCount: count,
+      playerNames: prev.playerNames.map((name, i) => i < count ? name : '')
+    }))
+  }, [])
 
-  const handlePlayerNameChange = (index, name) => {
-    setPlayerNames(prev => {
-      const newNames = [...prev]
-      newNames[index] = name
-      return newNames
-    })
-  }
+  const handlePlayerNameChange = useCallback((index, name) => {
+    setGameState(prev => ({
+      ...prev,
+      playerNames: prev.playerNames.map((n, i) => i === index ? name : n)
+    }))
+  }, [])
 
-  const startGame = () => {
-    setElementScores(Array(playerCount).fill().map(() => 
-      Array(7).fill().map(() => Array(5).fill(0))
-    ))
-    setScores(Array(playerCount).fill().map(() => Array(7).fill(0)))
-    setMasteryBonus(Array(7).fill(-1))
-    setGameStarted(true)
-  }
-
-  const calculateFinalScore = (elementScores) => {
-    if (!elementScores || elementScores.length === 0) return 0
+  const calculateFinalScore = useCallback((elementScores) => {
+    if (!elementScores?.length) return 0
     const maxElement = Math.max(...elementScores)
-    return elementScores.reduce((sum, score) => {
-      if (score === maxElement) return sum
-      return sum - score
-    }, maxElement)
-  }
+    return elementScores.reduce((sum, score) => 
+      score === maxElement ? sum : sum - score, maxElement)
+  }, [])
 
-  const handleElementScoreChange = (playerIndex, roundIndex, elementIndex, newScore) => {
-    const scoreValue = parseInt(newScore) || 0
+  const startGame = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      started: true,
+      elementScores: Array(prev.playerCount).fill()
+        .map(() => Array(MAX_ROUNDS).fill()
+        .map(() => Array(elements.length).fill(0))),
+      scores: Array(prev.playerCount).fill()
+        .map(() => Array(MAX_ROUNDS).fill(0))
+    }))
+  }, [])
+
+  const handleElementScoreChange = useCallback((playerIndex, roundIndex, elementIndex, value) => {
+    const scoreValue = Math.max(0, parseInt(value) || 0)
     
-    setElementScores(prev => {
-      const newElementScores = [...prev]
+    setGameState(prev => {
+      const newElementScores = [...prev.elementScores]
       if (!newElementScores[playerIndex]) {
-        newElementScores[playerIndex] = Array(7).fill().map(() => Array(5).fill(0))
-      }
-      if (!newElementScores[playerIndex][roundIndex]) {
-        newElementScores[playerIndex][roundIndex] = Array(5).fill(0)
+        newElementScores[playerIndex] = Array(MAX_ROUNDS).fill()
+          .map(() => Array(elements.length).fill(0))
       }
       newElementScores[playerIndex][roundIndex][elementIndex] = scoreValue
-      return newElementScores
-    })
 
-    setScores(prev => {
-      const newScores = [...prev]
-      if (!newScores[playerIndex]) {
-        newScores[playerIndex] = Array(7).fill(0)
-      }
-      const roundScores = elementScores[playerIndex][roundIndex].map((score, idx) => 
-        idx === elementIndex ? scoreValue : score
+      const newScores = [...prev.scores]
+      newScores[playerIndex] = newScores[playerIndex] || Array(MAX_ROUNDS).fill(0)
+      newScores[playerIndex][roundIndex] = calculateFinalScore(
+        newElementScores[playerIndex][roundIndex]
       )
-      newScores[playerIndex][roundIndex] = calculateFinalScore(roundScores)
-      return newScores
-    })
-  }
 
-  const toggleMasteryBonus = (roundIndex, playerIndex) => {
-    setMasteryBonus(prev => {
-      const newMasteryBonus = [...prev]
-      if (newMasteryBonus[roundIndex] === playerIndex) {
-        newMasteryBonus[roundIndex] = -1
-      } else {
-        if (newMasteryBonus[roundIndex] !== -1) {
-          setScores(prevScores => prevScores.map((playerScores, pIndex) => 
-            pIndex === newMasteryBonus[roundIndex]
-              ? playerScores.map((score, rIndex) => 
-                  rIndex === roundIndex ? score - 15 : score
-                )
-              : playerScores
-          ))
-        }
-        newMasteryBonus[roundIndex] = playerIndex
+      return {
+        ...prev,
+        elementScores: newElementScores,
+        scores: newScores
       }
-      return newMasteryBonus
     })
+  }, [calculateFinalScore])
 
-    setScores(prev => prev.map((playerScores, pIndex) => 
-      pIndex === playerIndex
-        ? playerScores.map((score, rIndex) => 
-            rIndex === roundIndex 
-              ? score + (masteryBonus[roundIndex] === playerIndex ? -15 : 15)
-              : score
-          )
-        : playerScores
-    ))
-  }
+  const toggleMasteryBonus = useCallback((roundIndex, playerIndex) => {
+    setGameState(prev => {
+      const newMasteryBonus = [...prev.masteryBonus]
+      const oldBonusPlayer = newMasteryBonus[roundIndex]
+      newMasteryBonus[roundIndex] = oldBonusPlayer === playerIndex ? -1 : playerIndex
 
-  const calculateTotal = (playerIndex) => {
-    return (scores[playerIndex] || []).reduce((sum, score) => sum + (score || 0), 0)
-  }
+      const newScores = prev.scores.map((playerScores, pIndex) => 
+        playerScores.map((score, rIndex) => {
+          if (rIndex !== roundIndex) return score
+          if (pIndex === oldBonusPlayer) return score - MASTERY_BONUS
+          if (pIndex === playerIndex && oldBonusPlayer !== playerIndex) {
+            return score + MASTERY_BONUS
+          }
+          return score
+        })
+      )
 
-  // Composant de tableau des scores
-  const ScoreBoard = () => (
-    <div className="medieval-card">
-      <div className="medieval-header">
-        <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
+      return {
+        ...prev,
+        masteryBonus: newMasteryBonus,
+        scores: newScores
+      }
+    })
+  }, [])
+
+  const calculateTotal = useCallback((playerIndex) => {
+    return scores[playerIndex]?.reduce((sum, score) => sum + (score || 0), 0) || 0
+  }, [scores])
+
+  const nextTurn = useCallback(() => {
+    setGameState(prev => {
+      const nextPlayer = (prev.currentPlayer + 1) % prev.playerCount
+      const nextRound = nextPlayer === 0 ? prev.currentRound + 1 : prev.currentRound
+      
+      return {
+        ...prev,
+        currentPlayer: nextPlayer,
+        currentRound: nextRound,
+        ended: nextRound > MAX_ROUNDS
+      }
+    })
+  }, [])
+
+  const resetGame = useCallback(() => {
+    setGameState({ ...initialGameState })
+  }, [])
+
+  // Composants de rendu mémorisés
+  const ScoreBoard = useMemo(() => (
+    <Card className="medieval-card border-2 border-amber-900">
+      <CardHeader className="bg-amber-900 text-amber-50">
+        <CardTitle className="flex items-center justify-center gap-2">
           <Crown className="h-5 w-5" />
           Tableau des Scores
-        </h2>
-      </div>
-      <table className="medieval-table w-full">
-        <thead>
-          <tr>
-            <th className="w-32">Héros</th>
-            {Array.from({ length: 7 }, (_, i) => (
-              <th key={i} className="w-16">M{i + 1}</th>
-            ))}
-            <th className="w-20">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {playerNames.slice(0, playerCount).map((player, playerIndex) => (
-            <tr key={playerIndex} className={currentPlayer === playerIndex ? 'bg-brown-light/20' : ''}>
-              <td className="font-medieval">{player || `Héros ${playerIndex + 1}`}</td>
-              {Array.from({ length: 7 }, (_, roundIndex) => (
-                <td key={roundIndex} className="text-center">
-                  <div className="flex flex-col items-center">
-                    {scores[playerIndex]?.[roundIndex] || 0}
-                    {masteryBonus[roundIndex] === playerIndex && (
-                      <Star className="h-4 w-4 text-yellow-500" />
-                    )}
-                  </div>
-                </td>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-amber-800 text-amber-50">
+                <th className="border border-amber-900 p-2">Héros</th>
+                {Array.from({ length: MAX_ROUNDS }, (_, i) => (
+                  <th key={i} className="border border-amber-900 p-2">M{i + 1}</th>
+                ))}
+                <th className="border border-amber-900 p-2">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {playerNames.slice(0, playerCount).map((player, playerIndex) => (
+                <tr 
+                  key={playerIndex}
+                  className={`
+                    ${currentPlayer === playerIndex ? 'bg-amber-50' : 'bg-amber-100/50'}
+                    hover:bg-amber-200/50 transition-colors
+                  `}
+                >
+                  <td className="border border-amber-900 p-2 font-semibold">
+                    {player || `Héros ${playerIndex + 1}`}
+                  </td>
+                  {Array.from({ length: MAX_ROUNDS }, (_, roundIndex) => (
+                    <td key={roundIndex} className="border border-amber-900 p-2 text-center">
+                      <div className="flex flex-col items-center">
+                        {scores[playerIndex]?.[roundIndex] || 0}
+                        {masteryBonus[roundIndex] === playerIndex && (
+                          <Star className="h-4 w-4 text-amber-500 mt-1" />
+                        )}
+                      </div>
+                    </td>
+                  ))}
+                  <td className="border border-amber-900 p-2 text-center font-bold">
+                    {calculateTotal(playerIndex)}
+                  </td>
+                </tr>
               ))}
-              <td className="font-bold text-center">{calculateTotal(playerIndex)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  ), [playerNames, playerCount, currentPlayer, scores, masteryBonus, calculateTotal])
 
-  // Composant de saisie des éléments
-  const ElementInput = ({ element, icon, value, onChange }) => (
-    <div className="medieval-input-group p-2">
-      <label className="medieval-label flex items-center gap-2 mb-1">
-        <span>{icon}</span>
-        <span>{element}</span>
-      </label>
-      <Input
-        type="number"
-        value={value}
-        onChange={onChange}
-        min="0"
-        className="medieval-input text-center"
-      />
+  const ElementInputs = useMemo(() => (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {elements.map((element, index) => (
+        <div key={index} className="medieval-input-group">
+          <label className="block text-sm font-medium mb-1 flex items-center gap-2">
+            <span className={element.color}>{element.icon}</span>
+            <span>{element.name}</span>
+          </label>
+          <Input
+            type="number"
+            min="0"
+            value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
+            onChange={(e) => handleElementScoreChange(
+              currentPlayer,
+              currentRound - 1,
+              index,
+              e.target.value
+            )}
+            className="medieval-input text-center"
+          />
+        </div>
+      ))}
     </div>
-  )
+  ), [elementScores, currentPlayer, currentRound, handleElementScoreChange])
 
   // Rendu principal
   return (
-    <div className="medieval-theme min-h-screen">
-      <header className="medieval-main-header p-4 text-center">
-        <h1 className="text-3xl font-medieval flex items-center justify-center gap-2">
-          <Sword className="h-8 w-8" />
-          Calculatrice Etheryon
-          <Shield className="h-8 w-8" />
-        </h1>
+    <div className="min-h-screen bg-amber-50">
+      <header className="bg-amber-900 text-amber-50 p-4 shadow-lg">
+        <div className="container mx-auto flex items-center justify-between">
+          <h1 className="text-2xl md:text-3xl font-medieval flex items-center gap-2">
+            <Sword className="h-6 w-6 md:h-8 md:w-8" />
+            Calculatrice Etheryon
+            <Shield className="h-6 w-6 md:h-8 md:w-8" />
+          </h1>
+        </div>
       </header>
 
       <main className="container mx-auto p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Section principale */}
-          <div className="w-full lg:w-2/3">
-            {!gameStarted ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="medieval-card"
-              >
-                <div className="medieval-header">
-                  <h2 className="text-xl font-medieval">Création des Héros</h2>
-                </div>
-                <div className="p-4 space-y-4">
+        <AnimatePresence mode="wait">
+          {!gameStarted ? (
+            <motion.div
+              key="setup"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex flex-col md:flex-row gap-4"
+            >
+              <Card className="w-full md:w-2/3 medieval-card border-2 border-amber-900">
+                <CardHeader className="bg-amber-900 text-amber-50">
+                  <CardTitle className="flex items-center justify-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Création des Héros
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-4">
                   <div>
-                    <label className="medieval-label block mb-2">Nombre de Héros :</label>
+                    <label className="block text-lg font-medium mb-2">
+                      Nombre de Héros :
+                    </label>
                     <div className="flex flex-wrap gap-2">
                       {[2, 3, 4, 5, 6, 7, 8].map((count) => (
-                        <button
+                        <Button
                           key={count}
                           onClick={() => handlePlayerCountChange(count)}
-                          className={`medieval-button ${
-                            playerCount === count ? 'medieval-button-active' : ''
-                          }`}
+                          variant={playerCount === count ? "default" : "outline"}
+                          className={`
+                            ${playerCount === count 
+                              ? 'bg-amber-900 text-amber-50' 
+                              : 'border-amber-900 text-amber-900'
+                            }
+                          `}
                         >
                           {count}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
 
-                  <ScrollArea className="h-64 medieval-scroll">
-                    {playerNames.slice(0, playerCount).map((name, index) => (
-                      <div key={index} className="mb-2">
+                  <ScrollArea className="h-64 border rounded-lg p-4">
+                    <div className="space-y-4">
+                      {playerNames.slice(0, playerCount).map((name, index) => (
                         <Input
+                          key={index}
                           placeholder={`Nom du Héros ${index + 1}`}
                           value={name}
                           onChange={(e) => handlePlayerNameChange(index, e.target.value)}
                           className="medieval-input"
                         />
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </ScrollArea>
 
-                  <button
+                  <Button
                     onClick={startGame}
-                    className="medieval-button w-full"
                     disabled={playerNames.slice(0, playerCount).some(name => !name)}
+                    className="w-full bg-amber-900 text-amber-50 hover:bg-amber-800"
                   >
                     Commencer l'Aventure
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="medieval-card"
-              >
-                <div className="medieval-header">
-                  <h2 className="text-xl font-medieval flex items-center justify-center gap-2">
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <div className="w-full md:w-1/3">
+                {ScoreBoard}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="game"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex flex-col md:flex-row gap-4"
+            >
+              <Card className="w-full md:w-2/3 medieval-card border-2 border-amber-900">
+                <CardHeader className="bg-amber-900 text-amber-50">
+                  <CardTitle className="flex items-center justify-center gap-2">
                     <Heart className="h-5 w-5" />
-                    Tour de {playerNames[currentPlayer]} - Manche {currentRound}
-                  </h2>
-                </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {elements.map((element, index) => (
-                      <ElementInput
-                        key={index}
-                        element={element.name}
-                        icon={element.icon}
-                        value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
-                        onChange={(e) => handleElementScoreChange(
-                          currentPlayer,
-                          currentRound - 1,
-                          index,
-                          e.target.value
-                        )}
-                      />
-                    ))}
+                    {`Tour de ${playerNames[currentPlayer]} - Manche ${currentRound}`}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-4">
+                  {ElementInputs}
+                  
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={nextTurn}
+                      className="bg-amber-900 text-amber-50 hover:bg-amber-800"
+                    >
+                      {currentPlayer < playerCount - 1 ? (
+                        <span className="flex items-center gap-2">
+                          Héros Suivant
+                          <ChevronRight className="h-4 w-4" />
+                        </span>
+                      ) : currentRound < MAX_ROUNDS ? (
+                        'Manche Suivante'
+                      ) : (
+                        'Terminer la Partie'
+                      )}
+                    </Button>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <button
-                    onClick={() => {
-                      if (currentPlayer < playerCount - 1) {
-                        setCurrentPlayer(currentPlayer + 1)
-                      } else {
-                        setCurrentPlayer(0)
-                        setCurrentRound(currentRound < 7 ? currentRound + 1 : currentRound)
-                      }
-                    }}
-                    className="medieval-button mt-4"
-                  >
-                    {currentPlayer < playerCount - 1 ? 'Héros Suivant' : 'Manche Suivante'}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Tableau des scores */}
-          <div className="w-full lg:w-1/3">
-            <ScoreBoard />
-          </div>
-        </div>
+              <div className="w-full md:w-1/3">
+                {ScoreBoard}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   )
