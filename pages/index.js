@@ -1,16 +1,27 @@
-import EtheryonCalculator from '@/components/calculator/EtheryonCalculator'
-import { Card } from '@/components/ui/card'
+'use client'
+
 import React from 'react'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Checkbox } from '@/components/ui/checkbox'
+import { motion } from 'framer-motion'
+import EtheryonCalculator from '@/components/calculator/EtheryonCalculator'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { useTheme } from 'next-themes'
 
 export default function Home() {
+  const { theme } = useTheme()
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className={`min-h-screen bg-background ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="container mx-auto p-4">
-        <EtheryonCalculator />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="w-full max-w-4xl mx-auto">
+            <EtheryonCalculator />
+          </Card>
+        </motion.div>
       </div>
     </div>
   )
