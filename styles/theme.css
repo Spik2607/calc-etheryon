@@ -1,0 +1,53 @@
+:root {
+  --parchment: #f4ecd8;
+  --brown-dark: #8b4513;
+  --brown-light: #d2691e;
+  --border-dark: #654321;
+}
+
+.medieval-theme {
+  background: var(--parchment);
+  border: 2px solid var(--border-dark);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-family: 'MedievalSharp', cursive; /* Nécessite d'importer cette police */
+}
+
+.medieval-header {
+  background: var(--brown-dark);
+  color: var(--parchment);
+  padding: 1rem;
+  border-bottom: 2px solid var(--border-dark);
+  text-align: center;
+}
+
+.medieval-button {
+  background: var(--brown-dark);
+  color: var(--parchment);
+  border: 1px solid var(--border-dark);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.medieval-button:hover {
+  background: var(--brown-light);
+}
+
+.medieval-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.medieval-table th,
+.medieval-table td {
+  border: 1px solid var(--border-dark);
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.medieval-table th {
+  background: var(--brown-dark);
+  color: var(--parchment);
+}
