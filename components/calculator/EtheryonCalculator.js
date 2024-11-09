@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Shield, Sword, Star, Crown, Heart, ChevronRight, Award } from 'lucide-react'
+import React, { useState, useCallback, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Shield, Sword, Star, Crown, Heart, ChevronRight, Award } from "lucide-react"
 
 const elements = [
   { name: 'Eau', icon: '💧', color: 'text-blue-500' },
