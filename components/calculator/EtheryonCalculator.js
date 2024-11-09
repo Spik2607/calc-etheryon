@@ -1,52 +1,25 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from 'next-themes'
-import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import Image from 'next/image'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Trophy, Users, SunIcon, MoonIcon } from 'lucide-react'
+import { Shield, Sword, Star, Crown, Heart } from 'lucide-react'
+import '../styles/theme.css'
 
-// Constants
-const elements = ['Eau', 'Feu', 'Terre', 'Air', 'Foudre']
-
-// Animations
-const fadeIn = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-  transition: { duration: 0.3 }
-}
-
-const ElementInput = ({ element, value, onChange, className }) => {
-  return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        {element}
-      </label>
-      <Input
-        type="number"
-        value={value}
-        onChange={onChange}
-        className={`w-full text-center ${className}`}
-        min="0"
-      />
-    </div>
-  )
-}
+const elements = [
+  { name: 'Eau', icon: '💧' },
+  { name: 'Feu', icon: '🔥' },
+  { name: 'Terre', icon: '🌍' },
+  { name: 'Air', icon: '🌪️' },
+  { name: 'Foudre', icon: '⚡' }
+]
 
 const EtheryonCalculator = () => {
-  // Theme State
-  const { theme, setTheme } = useTheme()
-
-  // Game States
   const [gameStarted, setGameStarted] = useState(false)
-  const [gameEnded, setGameEnded] = useState(false)
   const [playerCount, setPlayerCount] = useState(3)
   const [playerNames, setPlayerNames] = useState(Array(8).fill(''))
   const [elementScores, setElementScores] = useState([])
@@ -54,11 +27,8 @@ const EtheryonCalculator = () => {
   const [currentRound, setCurrentRound] = useState(1)
   const [scores, setScores] = useState([])
   const [masteryBonus, setMasteryBonus] = useState([])
-  const [editMode, setEditMode] = useState(false)
-  const [teamMode, setTeamMode] = useState(false)
-  const [teams, setTeams] = useState([])
 
-  // Handlers
+  // Fonctions de gestion
   const handlePlayerCountChange = (count) => {
     setPlayerCount(count)
     setPlayerNames(prev => {
@@ -66,7 +36,6 @@ const EtheryonCalculator = () => {
       newNames.length = count
       return newNames.fill('', prev.length, count)
     })
-    setTeams(Array(count).fill(0))
   }
 
   const handlePlayerNameChange = (index, name) => {
@@ -74,14 +43,6 @@ const EtheryonCalculator = () => {
       const newNames = [...prev]
       newNames[index] = name
       return newNames
-    })
-  }
-
-  const handleTeamChange = (index, teamNumber) => {
-    setTeams(prev => {
-      const newTeams = [...prev]
-      newTeams[index] = teamNumber
-      return newTeams
     })
   }
 
@@ -166,243 +127,182 @@ const EtheryonCalculator = () => {
     return (scores[playerIndex] || []).reduce((sum, score) => sum + (score || 0), 0)
   }
 
-  const getWinner = () => {
-    if (teamMode) {
-      const teamScores = teams.reduce((acc, team, index) => {
-        if (!acc[team]) acc[team] = 0
-        acc[team] += calculateTotal(index)
-        return acc
-      }, {})
-      const maxScore = Math.max(...Object.values(teamScores))
-      const winningTeams = Object.entries(teamScores)
-        .filter(([_, score]) => score === maxScore)
-        .map(([team]) => `Équipe ${team}`)
-      return winningTeams.join(' et ')
-    } else {
-      const totals = playerNames.slice(0, playerCount).map((_, index) => calculateTotal(index))
-      const maxScore = Math.max(...totals)
-      const winners = playerNames.filter((_, index) => calculateTotal(index) === maxScore)
-      return winners.join(' et ')
-    }
-  }
-  // Render Functions
-  const renderElementInputs = (playerIndex, roundIndex) => (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      {elements.map((element, elementIndex) => (
-        <ElementInput
-          key={elementIndex}
-          element={element}
-          value={elementScores[playerIndex]?.[roundIndex]?.[elementIndex] || 0}
-          onChange={(e) => handleElementScoreChange(playerIndex, roundIndex, elementIndex, e.target.value)}
-          className="w-full text-center"
-        />
-      ))}
+  // Composant de tableau des scores
+  const ScoreBoard = () => (
+    <div className="medieval-card">
+      <div className="medieval-header">
+        <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
+          <Crown className="h-5 w-5" />
+          Tableau des Scores
+        </h2>
+      </div>
+      <table className="medieval-table w-full">
+        <thead>
+          <tr>
+            <th className="w-32">Héros</th>
+            {Array.from({ length: 7 }, (_, i) => (
+              <th key={i} className="w-16">M{i + 1}</th>
+            ))}
+            <th className="w-20">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {playerNames.slice(0, playerCount).map((player, playerIndex) => (
+            <tr key={playerIndex} className={currentPlayer === playerIndex ? 'bg-brown-light/20' : ''}>
+              <td className="font-medieval">{player || `Héros ${playerIndex + 1}`}</td>
+              {Array.from({ length: 7 }, (_, roundIndex) => (
+                <td key={roundIndex} className="text-center">
+                  <div className="flex flex-col items-center">
+                    {scores[playerIndex]?.[roundIndex] || 0}
+                    {masteryBonus[roundIndex] === playerIndex && (
+                      <Star className="h-4 w-4 text-yellow-500" />
+                    )}
+                  </div>
+                </td>
+              ))}
+              <td className="font-bold text-center">{calculateTotal(playerIndex)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 
-  // Main Render
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4">
-        {/* Header avec logo et switch de thème */}
-        <div className="flex justify-between items-center mb-6">
-          <a 
-            href="https://www.etheryon.fr" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-primary hover:text-primary/80 transition-colors flex items-center space-x-2"
-          >
-            <Trophy className="h-5 w-5" />
-            <span className="font-medium">Site officiel Etheryon</span>
-          </a>
-          <div className="flex items-center space-x-2">
-            <SunIcon className="h-5 w-5" />
-            <Switch 
-              checked={theme === 'dark'}
-              onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            />
-            <MoonIcon className="h-5 w-5" />
-          </div>
-        </div>
+  // Composant de saisie des éléments
+  const ElementInput = ({ element, icon, value, onChange }) => (
+    <div className="medieval-input-group p-2">
+      <label className="medieval-label flex items-center gap-2 mb-1">
+        <span>{icon}</span>
+        <span>{element}</span>
+      </label>
+      <Input
+        type="number"
+        value={value}
+        onChange={onChange}
+        min="0"
+        className="medieval-input text-center"
+      />
+    </div>
+  )
 
-        {/* Contenu principal avec animation */}
-        <AnimatePresence mode="wait">
-          {!gameStarted ? (
-            <motion.div
-              key="setup"
-              {...fadeIn}
-            >
-              <Card className="max-w-md mx-auto">
-                <CardHeader>
-                  <CardTitle>Configuration de la partie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* Nombre de joueurs */}
-                  <div className="mb-6">
-                    <label className="block mb-2 font-medium">Nombre de joueurs :</label>
+  // Rendu principal
+  return (
+    <div className="medieval-theme min-h-screen">
+      <header className="medieval-main-header p-4 text-center">
+        <h1 className="text-3xl font-medieval flex items-center justify-center gap-2">
+          <Sword className="h-8 w-8" />
+          Calculatrice Etheryon
+          <Shield className="h-8 w-8" />
+        </h1>
+      </header>
+
+      <main className="container mx-auto p-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Section principale */}
+          <div className="w-full lg:w-2/3">
+            {!gameStarted ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="medieval-card"
+              >
+                <div className="medieval-header">
+                  <h2 className="text-xl font-medieval">Création des Héros</h2>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div>
+                    <label className="medieval-label block mb-2">Nombre de Héros :</label>
                     <div className="flex flex-wrap gap-2">
                       {[2, 3, 4, 5, 6, 7, 8].map((count) => (
-                        <Button
+                        <button
                           key={count}
                           onClick={() => handlePlayerCountChange(count)}
-                          variant={playerCount === count ? "default" : "outline"}
+                          className={`medieval-button ${
+                            playerCount === count ? 'medieval-button-active' : ''
+                          }`}
                         >
                           {count}
-                        </Button>
+                        </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Mode équipe */}
-                  <div className="mb-6">
-                    <label className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={teamMode}
-                        onCheckedChange={(checked) => setTeamMode(checked)}
-                      />
-                      <span>Mode équipe</span>
-                    </label>
-                  </div>
-
-                  {/* Liste des joueurs */}
-                  <ScrollArea className="h-60">
-                    <div className="space-y-4">
-                      {playerNames.slice(0, playerCount).map((name, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
-                            placeholder={`Joueur ${index + 1}`}
-                            value={name}
-                            onChange={(e) => handlePlayerNameChange(index, e.target.value)}
-                          />
-                          {teamMode && (
-                            <Select
-                              value={teams[index].toString()}
-                              onValueChange={(value) => handleTeamChange(index, parseInt(value))}
-                            >
-                              <SelectTrigger className="w-24">
-                                <SelectValue placeholder="Équipe" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {[1, 2, 3, 4].map((teamNumber) => (
-                                  <SelectItem 
-                                    key={teamNumber} 
-                                    value={teamNumber.toString()}
-                                  >
-                                    Équipe {teamNumber}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                  <ScrollArea className="h-64 medieval-scroll">
+                    {playerNames.slice(0, playerCount).map((name, index) => (
+                      <div key={index} className="mb-2">
+                        <Input
+                          placeholder={`Nom du Héros ${index + 1}`}
+                          value={name}
+                          onChange={(e) => handlePlayerNameChange(index, e.target.value)}
+                          className="medieval-input"
+                        />
+                      </div>
+                    ))}
                   </ScrollArea>
 
-                  <Button 
-                    onClick={startGame} 
-                    className="w-full mt-6"
+                  <button
+                    onClick={startGame}
+                    className="medieval-button w-full"
                     disabled={playerNames.slice(0, playerCount).some(name => !name)}
                   >
-                    Commencer la partie
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ) : gameEnded ? (
-            <motion.div
-              key="results"
-              {...fadeIn}
-            >
-              <Card className="max-w-4xl mx-auto">
-                <CardHeader>
-                  <CardTitle>Résultats Finaux</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-2 text-left">Joueur</th>
-                          {Array.from({length: 7}, (_, i) => (
-                            <th key={i} className="px-4 py-2 text-center">M{i + 1}</th>
-                          ))}
-                          <th className="px-4 py-2 text-center">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {playerNames.slice(0, playerCount).map((player, index) => (
-                          <tr key={index} className={player === getWinner() ? "bg-green-100 dark:bg-green-900" : ""}>
-                            <td className="px-4 py-2">{player}</td>
-                            {(scores[index] || []).map((score, i) => (
-                              <td key={i} className="px-4 py-2 text-center">
-                                {score || 0}
-                              </td>
-                            ))}
-                            <td className="px-4 py-2 text-center font-bold">
-                              {calculateTotal(index)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    Commencer l'Aventure
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="medieval-card"
+              >
+                <div className="medieval-header">
+                  <h2 className="text-xl font-medieval flex items-center justify-center gap-2">
+                    <Heart className="h-5 w-5" />
+                    Tour de {playerNames[currentPlayer]} - Manche {currentRound}
+                  </h2>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {elements.map((element, index) => (
+                      <ElementInput
+                        key={index}
+                        element={element.name}
+                        icon={element.icon}
+                        value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
+                        onChange={(e) => handleElementScoreChange(
+                          currentPlayer,
+                          currentRound - 1,
+                          index,
+                          e.target.value
+                        )}
+                      />
+                    ))}
                   </div>
 
-                  <div className="mt-6 text-center">
-                    <div className="text-2xl font-bold mb-4">
-                      {teamMode ? "Équipe gagnante" : "Gagnant"} : {getWinner()}
-                    </div>
-                    <Button onClick={() => {
-                      setGameStarted(false)
-                      setGameEnded(false)
-                      setCurrentPlayer(0)
-                      setCurrentRound(1)
-                    }}>
-                      Nouvelle partie
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="game"
-              {...fadeIn}
-            >
-              <Card className="max-w-4xl mx-auto">
-                <CardHeader>
-                  <CardTitle>
-                    Tour de {playerNames[currentPlayer]} - Manche {currentRound}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {renderElementInputs(currentPlayer, currentRound - 1)}
-                  <Button 
-                    className="mt-6"
+                  <button
                     onClick={() => {
                       if (currentPlayer < playerCount - 1) {
                         setCurrentPlayer(currentPlayer + 1)
                       } else {
                         setCurrentPlayer(0)
-                        if (currentRound < 7) {
-                          setCurrentRound(currentRound + 1)
-                        } else {
-                          setGameEnded(true)
-                        }
+                        setCurrentRound(currentRound < 7 ? currentRound + 1 : currentRound)
                       }
                     }}
+                    className="medieval-button mt-4"
                   >
-                    {currentRound === 7 && currentPlayer === playerCount - 1 
-                      ? "Terminer la partie" 
-                      : "Joueur suivant"
-                    }
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                    {currentPlayer < playerCount - 1 ? 'Héros Suivant' : 'Manche Suivante'}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Tableau des scores */}
+          <div className="w-full lg:w-1/3">
+            <ScoreBoard />
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
