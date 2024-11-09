@@ -10,15 +10,15 @@ export default function App({ Component, pageProps }) {
       enableSystem
       disableTransitionOnChange
     >
-      <AnimatePresence mode="wait">
-        <div className="min-h-screen bg-background font-sans antialiased">
-          <div className="relative flex min-h-screen flex-col">
-            <main className="flex-1">
+      <div className="min-h-screen bg-background font-sans antialiased">
+        <div className="relative flex min-h-screen flex-col">
+          <main className="flex-1">
+            <AnimatePresence mode="wait">
               <Component {...pageProps} />
-            </main>
-          </div>
+            </AnimatePresence>
+          </main>
         </div>
-      </AnimatePresence>
+      </div>
     </ThemeProvider>
   )
 }
