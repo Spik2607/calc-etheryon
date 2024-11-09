@@ -1,6 +1,6 @@
 import { ThemeProvider } from 'next-themes'
-import { AnimatePresence } from 'framer-motion'
 import '../styles/globals.css'
+import '../styles/medieval.css'  // Ajoutez cette ligne ici
 
 export default function App({ Component, pageProps }) {
   return (
@@ -10,15 +10,7 @@ export default function App({ Component, pageProps }) {
       enableSystem
       disableTransitionOnChange
     >
-      <div className="min-h-screen bg-background font-sans antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          <main className="flex-1">
-            <AnimatePresence mode="wait">
-              <Component {...pageProps} />
-            </AnimatePresence>
-          </main>
-        </div>
-      </div>
+      <Component {...pageProps} />
     </ThemeProvider>
   )
 }
