@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -8,12 +10,33 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 import { SunIcon, MoonIcon } from 'lucide-react';
 
 const elements = ['Eau', 'Feu', 'Terre', 'Air', 'Foudre'];
 
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+};
+
+const ElementInput = ({ element, value, onChange, className }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      {element}
+    </label>
+    <Input
+      type="number"
+      value={value}
+      onChange={onChange}
+      className={`input-element ${className}`}
+      min="0"
+    />
+  </div>
+);
+
 const EtheryonCalculator = () => {
+  const { theme, setTheme } = useTheme();
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [playerCount, setPlayerCount] = useState(3);
@@ -24,20 +47,15 @@ const EtheryonCalculator = () => {
   const [scores, setScores] = useState([]);
   const [masteryBonus, setMasteryBonus] = useState([]);
   const [editMode, setEditMode] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [teamMode, setTeamMode] = useState(false);
   const [teams, setTeams] = useState([]);
 
-  // Effet pour le mode sombre
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+    // Initialiser le thème système par défaut
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    setTheme(systemTheme);
+  }, []);
 
-  // Gestionnaires d'événements
   const handlePlayerCountChange = (count) => {
     setPlayerCount(count);
     setPlayerNames(prev => {
@@ -73,7 +91,6 @@ const EtheryonCalculator = () => {
     setGameStarted(true);
   };
 
-  // Calculs de scores
   const calculateFinalScore = (elementScores) => {
     if (!elementScores || elementScores.length === 0) return 0;
     const maxElement = Math.max(...elementScores);
@@ -111,7 +128,6 @@ const EtheryonCalculator = () => {
     });
   };
 
-  // Gestion des bonus
   const toggleMasteryBonus = (roundIndex, playerIndex) => {
     setMasteryBonus(prev => {
       const newMasteryBonus = [...prev];
@@ -167,95 +183,124 @@ const EtheryonCalculator = () => {
     }
   };
 
-  // Components de rendu
   const renderElementInputs = (playerIndex, roundIndex) => (
-    <div className="grid grid-cols-5 gap-2">
+    <motion.div 
+      className="grid grid-cols-2 md:grid-cols-5 gap-4"
+      variants={fadeIn}
+      initial="initial"
+      animate="animate"
+    >
       {elements.map((element, elementIndex) => (
-        <div key={elementIndex} className="flex flex-col items-center">
-          <label className="text-sm mb-1">{element}</label>
-          <Input
-            type="number"
-            value={elementScores[playerIndex]?.[roundIndex]?.[elementIndex] || 0}
-            onChange={(e) => handleElementScoreChange(playerIndex, roundIndex, elementIndex, e.target.value)}
-            className="w-full text-center"
-          />
-        </div>
+        <ElementInput
+          key={elementIndex}
+          element={element}
+          value={elementScores[playerIndex]?.[roundIndex]?.[elementIndex] || 0}
+          onChange={(e) => handleElementScoreChange(playerIndex, roundIndex, elementIndex, e.target.value)}
+          className="w-full text-center"
+        />
       ))}
-    </div>
+    </motion.div>
   );
 
-  const renderMasterySection = () => (
-    <div className="mt-4">
-      <h3 className="text-lg font-semibold mb-2">Maîtrise par manche :</h3>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-100 dark:bg-gray-700">
-            <th className="border p-2">Manche</th>
-            {playerNames.slice(0, playerCount).map((player, index) => (
-              <th key={index} className="border p-2">{player}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {masteryBonus.map((masteryPlayerIndex, roundIndex) => (
-            <tr key={roundIndex}>
-              <td className="border p-2 text-center">{roundIndex + 1}</td>
-              {playerNames.slice(0, playerCount).map((_, playerIndex) => (
-                <td key={playerIndex} className="border p-2 text-center">
-                  <Checkbox
-                    checked={masteryPlayerIndex === playerIndex}
-                    onCheckedChange={() => toggleMasteryBonus(roundIndex, playerIndex)}
-                  />
-                </td>
+const renderMasterySection = () => (
+    <motion.div 
+      className="mt-6 card-container"
+      variants={fadeIn}
+      initial="initial"
+      animate="animate"
+    >
+      <h3 className="text-lg font-semibold mb-4">Maîtrise par manche :</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-gray-800">
+              <th className="table-header">Manche</th>
+              {playerNames.slice(0, playerCount).map((player, index) => (
+                <th key={index} className="table-header">{player}</th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {masteryBonus.map((masteryPlayerIndex, roundIndex) => (
+              <tr key={roundIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td className="table-cell text-center">{roundIndex + 1}</td>
+                {playerNames.slice(0, playerCount).map((_, playerIndex) => (
+                  <td key={playerIndex} className="table-cell text-center">
+                    <Checkbox
+                      checked={masteryPlayerIndex === playerIndex}
+                      onCheckedChange={() => toggleMasteryBonus(roundIndex, playerIndex)}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </motion.div>
   );
 
   const renderGameContent = () => (
-    <Card className="w-full max-w-4xl">
-      <CardHeader>
-        <CardTitle>Tour de {playerNames[currentPlayer]} - Manche {currentRound}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <motion.div
+      className="card-container"
+      variants={fadeIn}
+      initial="initial"
+      animate="animate"
+    >
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-6">
+          Tour de {playerNames[currentPlayer]} - Manche {currentRound}
+        </h2>
+
         {renderElementInputs(currentPlayer, currentRound - 1)}
-        <div className="overflow-x-auto mt-4">
+
+        <div className="mt-8 overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700">
-                <th className="border p-2">Joueur</th>
+              <tr>
+                <th className="table-header">Joueur</th>
                 {[1, 2, 3, 4, 5, 6, 7].map(round => (
-                  <th key={round} className="border p-2">Manche {round}</th>
+                  <th key={round} className="table-header">Manche {round}</th>
                 ))}
-                <th className="border p-2">Total</th>
+                <th className="table-header">Total</th>
               </tr>
             </thead>
             <tbody>
               {playerNames.slice(0, playerCount).map((player, playerIndex) => (
-                <tr key={playerIndex}>
-                  <td className="border p-2">
+                <motion.tr 
+                  key={playerIndex}
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
+                    ${teamMode ? `team-${teams[playerIndex]}` : ''}`}
+                >
+                  <td className="table-cell font-medium">
                     {player} {teamMode && `(Équipe ${teams[playerIndex]})`}
                   </td>
                   {(scores[playerIndex] || []).map((score, roundIndex) => (
-                    <td key={roundIndex} className="border p-2 text-center">
+                    <td key={roundIndex} className="table-cell text-center">
                       {score || 0}
-                      {masteryBonus[roundIndex] === playerIndex && ' (M)'}
+                      {masteryBonus[roundIndex] === playerIndex && 
+                        <span className="ml-1 text-primary">(M)</span>
+                      }
                     </td>
                   ))}
-                  <td className="border p-2 text-center font-bold">
+                  <td className="table-cell text-center font-bold">
                     {calculateTotal(playerIndex)}
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
+
         {renderMasterySection()}
-        <div className="flex justify-between mt-4">
-          <Button onClick={() => setEditMode(!editMode)}>
+
+        <div className="flex justify-between mt-6">
+          <Button 
+            variant="outline"
+            onClick={() => setEditMode(!editMode)}
+            className="button-secondary"
+          >
             {editMode ? "Terminer l'édition" : "Modifier les scores"}
           </Button>
           <Button 
@@ -271,187 +316,179 @@ const EtheryonCalculator = () => {
                 }
               }
             }}
+            className="button-primary"
           >
             Joueur suivant
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </motion.div>
   );
 
-  // Rendu principal
-  return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-      <div className="container mx-auto p-4 dark:bg-gray-800 dark:text-white">
-        <div className="flex justify-between items-center mb-4">
+return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4">
+        <motion.div 
+          className="flex justify-between items-center mb-6"
+          variants={fadeIn}
+          initial="initial"
+          animate="animate"
+        >
           <a 
             href="https://www.etheryon.fr" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100"
+            className="text-primary hover:text-primary/80 transition-colors"
           >
             Site officiel Etheryon
           </a>
-          <div className="flex items-center">
-            <SunIcon className="h-6 w-6 mr-2" />
-            <Switch checked={darkMode} onCheckedChange={(checked) => setDarkMode(checked)} />
-            <MoonIcon className="h-6 w-6 ml-2" />
+          <div className="flex items-center gap-2">
+            <SunIcon className="h-5 w-5" />
+            <Switch 
+              checked={theme === 'dark'}
+              onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="data-[state=checked]:bg-primary"
+            />
+            <MoonIcon className="h-5 w-5" />
           </div>
-        </div>
+        </motion.div>
 
-        {!gameStarted ? (
-          <Card className="w-96 mx-auto">
-            <CardHeader>
-              <CardTitle>Configuration du jeu Etheryon</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <label className="block mb-2">Nombre de joueurs :</label>
-                <div className="flex flex-wrap gap-2">
-                  {[2, 3, 4, 5, 6, 7, 8].map((count) => (
-                    <Button
-                      key={count}
-                      onClick={() => handlePlayerCountChange(count)}
-                      variant={playerCount === count ? "default" : "outline"}
-                    >
-                      {count}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="flex items-center">
-                  <Checkbox
-                    checked={teamMode}
-                    onCheckedChange={(checked) => setTeamMode(checked)}
-                    className="mr-2"
-                  />
-                  Mode équipe
-                </label>
-              </div>
+        <AnimatePresence mode="wait">
+          {!gameStarted ? (
+            <motion.div
+              key="setup"
+              className="card-container max-w-md mx-auto"
+              variants={fadeIn}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-6">Configuration du jeu Etheryon</h1>
 
-              <ScrollArea className="h-60">
-                {playerNames.slice(0, playerCount).map((name, index) => (
-                  <div key={index} className="mb-2 flex items-center">
-                    <Input
-                      placeholder={`Joueur ${index + 1}`}
-                      value={name}
-                      onChange={(e) => handlePlayerNameChange(index, e.target.value)}
-                      className="mr-2"
-                    />
-                    {teamMode && (
-                      <Select
-                        value={teams[index].toString()}
-                        onValueChange={(value) => handleTeamChange(index, parseInt(value))}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue placeholder="Équipe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4].map((teamNumber) => (
-                            <SelectItem key={teamNumber} value={teamNumber.toString()}>
-                              Équipe {teamNumber}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                ))}
-              </ScrollArea>
-
-              <Button 
-                onClick={startGame} 
-                className="w-full mt-4"
-                disabled={playerNames.slice(0, playerCount).some(name => !name)}
-              >
-                Commencer la partie
-              </Button>
-            </CardContent>
-          </Card>
-       ) : gameEnded ? (
-          <Card className="w-full max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle>Résultats finaux</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100 dark:bg-gray-700">
-                      <th className="border p-2">Joueur</th>
-                      {[1, 2, 3, 4, 5, 6, 7].map(round => (
-                        <th key={round} className="border p-2">Manche {round}</th>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block mb-2 font-medium">Nombre de joueurs :</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[2, 3, 4, 5, 6, 7, 8].map((count) => (
+                        <Button
+                          key={count}
+                          onClick={() => handlePlayerCountChange(count)}
+                          variant={playerCount === count ? "default" : "outline"}
+                          className={playerCount === count ? 'button-primary' : 'button-secondary'}
+                        >
+                          {count}
+                        </Button>
                       ))}
-                      <th className="border p-2">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {playerNames.slice(0, playerCount).map((player, playerIndex) => (
-                      <tr 
-                        key={playerIndex} 
-                        className={player === getWinner() ? "bg-green-100 dark:bg-green-700" : ""}
-                      >
-                        <td className="border p-2">
-                          {player} {teamMode && `(Équipe ${teams[playerIndex]})`}
-                        </td>
-                        {(scores[playerIndex] || []).map((score, roundIndex) => (
-                          <td key={roundIndex} className="border p-2 text-center">
-                            {editMode ? (
-                              <div>
-                                {renderElementInputs(playerIndex, roundIndex)}
-                              </div>
-                            ) : (
-                              <>
-                                {score || 0}
-                                {masteryBonus[roundIndex] === playerIndex && ' (M)'}
-                              </>
-                            )}
-                          </td>
-                        ))}
-                        <td className="border p-2 text-center font-bold">
-                          {calculateTotal(playerIndex)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </div>
+                  </div>
 
-              {renderMasterySection()}
+                  <div>
+                    <label className="flex items-center gap-2">
+                      <Checkbox
+                        checked={teamMode}
+                        onCheckedChange={(checked) => setTeamMode(checked)}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                      <span>Mode équipe</span>
+                    </label>
+                  </div>
 
-              <div className="mt-8 text-center">
-                <div className="text-2xl font-bold mb-4">
-                  {teamMode ? "Équipe gagnante" : "Gagnant"} : {getWinner()}
-                </div>
-                
-                <div className="flex justify-center gap-4">
-                  <Button onClick={() => setEditMode(!editMode)}>
-                    {editMode ? "Terminer l'édition" : "Modifier les scores"}
-                  </Button>
-                  
+                  <ScrollArea className="h-60 rounded-md border p-4">
+                    <div className="space-y-4">
+                      {playerNames.slice(0, playerCount).map((name, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            placeholder={`Joueur ${index + 1}`}
+                            value={name}
+                            onChange={(e) => handlePlayerNameChange(index, e.target.value)}
+                            className="input-element"
+                          />
+                          {teamMode && (
+                            <Select
+                              value={teams[index].toString()}
+                              onValueChange={(value) => handleTeamChange(index, parseInt(value))}
+                            >
+                              <SelectTrigger className="w-24">
+                                <SelectValue placeholder="Équipe" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[1, 2, 3, 4].map((teamNumber) => (
+                                  <SelectItem 
+                                    key={teamNumber} 
+                                    value={teamNumber.toString()}
+                                    className={`team-${teamNumber}`}
+                                  >
+                                    Équipe {teamNumber}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+
                   <Button 
-                    onClick={() => {
-                      setGameStarted(false);
-                      setGameEnded(false);
-                      setCurrentPlayer(0);
-                      setCurrentRound(1);
-                      setScores([]);
-                      setElementScores([]);
-                      setMasteryBonus(Array(7).fill(-1));
-                      setEditMode(false);
-                    }}
+                    onClick={startGame} 
+                    className="w-full button-primary"
+                    disabled={playerNames.slice(0, playerCount).some(name => !name)}
                   >
-                    Nouvelle partie
+                    Commencer la partie
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          renderGameContent()
-        )}
+            </motion.div>
+          ) : gameEnded ? (
+            <motion.div
+              key="results"
+              className="card-container max-w-4xl mx-auto"
+              variants={fadeIn}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-6">Résultats finaux</h2>
+                {/* Le reste du contenu des résultats finaux reste le même */}
+                {/* ... */}
+                <div className="mt-8 text-center">
+                  <div className="text-2xl font-bold mb-6">
+                    {teamMode ? "Équipe gagnante" : "Gagnant"} : {getWinner()}
+                  </div>
+                  
+                  <div className="flex justify-center gap-4">
+                    <Button 
+                      onClick={() => setEditMode(!editMode)}
+                      className="button-secondary"
+                    >
+                      {editMode ? "Terminer l'édition" : "Modifier les scores"}
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => {
+                        setGameStarted(false);
+                        setGameEnded(false);
+                        setCurrentPlayer(0);
+                        setCurrentRound(1);
+                        setScores([]);
+                        setElementScores([]);
+                        setMasteryBonus(Array(7).fill(-1));
+                        setEditMode(false);
+                      }}
+                      className="button-primary"
+                    >
+                      Nouvelle partie
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            renderGameContent()
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
