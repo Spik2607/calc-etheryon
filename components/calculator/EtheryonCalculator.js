@@ -328,7 +328,94 @@ const EtheryonCalculator = () => {
               animate="animate"
               exit="exit"
             >
-              {/* Contenu des résultats finaux */}
+              <Card>
+  <CardHeader>
+    <CardTitle className="text-2xl font-bold flex items-center space-x-2">
+      <Trophy className="h-6 w-6" />
+      <span>Résultats finaux</span>
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-50 dark:bg-gray-800">
+            <th className="table-header">Joueur</th>
+            {[1, 2, 3, 4, 5, 6, 7].map(round => (
+              <th key={round} className="table-header">Manche {round}</th>
+            ))}
+            <th className="table-header">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {playerNames.slice(0, playerCount).map((player, playerIndex) => (
+            <tr 
+              key={playerIndex} 
+              className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
+                ${player === getWinner() ? "bg-green-100 dark:bg-green-800" : ""}
+                ${teamMode ? `team-${teams[playerIndex]}` : ''}`}
+            >
+              <td className="table-cell font-medium">
+                {player} {teamMode && `(Équipe ${teams[playerIndex]})`}
+              </td>
+              {(scores[playerIndex] || []).map((score, roundIndex) => (
+                <td key={roundIndex} className="table-cell text-center">
+                  {editMode ? (
+                    <div className="p-2">
+                      {renderElementInputs(playerIndex, roundIndex)}
+                    </div>
+                  ) : (
+                    <>
+                      {score || 0}
+                      {masteryBonus[roundIndex] === playerIndex && 
+                        <span className="ml-1 text-primary">(M)</span>
+                      }
+                    </>
+                  )}
+                </td>
+              ))}
+              <td className="table-cell text-center font-bold">
+                {calculateTotal(playerIndex)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div className="mt-8 text-center space-y-6">
+      <div className="text-2xl font-bold">
+        {teamMode ? "Équipe gagnante" : "Gagnant"} : {getWinner()}
+      </div>
+      
+      <div className="flex justify-center gap-4">
+        <Button 
+          onClick={() => setEditMode(!editMode)}
+          variant="outline"
+          className="button-secondary"
+        >
+          {editMode ? "Terminer l'édition" : "Modifier les scores"}
+        </Button>
+        
+        <Button 
+          onClick={() => {
+            setGameStarted(false)
+            setGameEnded(false)
+            setCurrentPlayer(0)
+            setCurrentRound(1)
+            setScores([])
+            setElementScores([])
+            setMasteryBonus(Array(7).fill(-1))
+            setEditMode(false)
+          }}
+          className="button-primary"
+        >
+          Nouvelle partie
+        </Button>
+      </div>
+    </div>
+  </CardContent>
+</Card>
             </motion.div>
           ) : (
             <motion.div
@@ -339,7 +426,141 @@ const EtheryonCalculator = () => {
               exit="exit"
               className="card-container max-w-4xl mx-auto"
             >
-              {/* Contenu du jeu en cours */}
+              <Card>
+  <CardHeader>
+    <CardTitle className="text-2xl font-bold flex items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <span>Tour de {playerNames[currentPlayer]}</span>
+        <span className="text-gray-500 dark:text-gray-400">
+          - Manche {currentRound}
+        </span>
+      </div>
+      {teamMode && (
+        <span className={`px-3 py-1 rounded-full text-sm team-${teams[currentPlayer]}`}>
+          Équipe {teams[currentPlayer]}
+        </span>
+      )}
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-6">
+    {/* Section des éléments */}
+    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">Points des éléments</h3>
+      {renderElementInputs(currentPlayer, currentRound - 1)}
+    </div>
+
+    {/* Table des scores */}
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="table-header">Joueur</th>
+            {[1, 2, 3, 4, 5, 6, 7].map(round => (
+              <th key={round} className="table-header">
+                Manche {round}
+              </th>
+            ))}
+            <th className="table-header">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {playerNames.slice(0, playerCount).map((player, playerIndex) => (
+            <motion.tr 
+              key={playerIndex}
+              className={`
+                hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
+                ${currentPlayer === playerIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
+                ${teamMode ? `team-${teams[playerIndex]}` : ''}
+              `}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: playerIndex * 0.1 }}
+            >
+              <td className="table-cell font-medium">
+                {player} {teamMode && `(Équipe ${teams[playerIndex]})`}
+              </td>
+              {(scores[playerIndex] || []).map((score, roundIndex) => (
+                <td key={roundIndex} className="table-cell text-center">
+                  {score || 0}
+                  {masteryBonus[roundIndex] === playerIndex && (
+                    <span className="ml-1 text-primary">(M)</span>
+                  )}
+                </td>
+              ))}
+              <td className="table-cell text-center font-bold">
+                {calculateTotal(playerIndex)}
+              </td>
+            </motion.tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Section Maîtrise */}
+    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">Maîtrise par manche</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="table-header">Manche</th>
+              {playerNames.slice(0, playerCount).map((player, index) => (
+                <th key={index} className="table-header">{player}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {masteryBonus.map((masteryPlayerIndex, roundIndex) => (
+              <tr key={roundIndex}>
+                <td className="table-cell text-center">{roundIndex + 1}</td>
+                {playerNames.slice(0, playerCount).map((_, playerIndex) => (
+                  <td key={playerIndex} className="table-cell text-center">
+                    <Checkbox
+                      checked={masteryPlayerIndex === playerIndex}
+                      onCheckedChange={() => toggleMasteryBonus(roundIndex, playerIndex)}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* Boutons d'action */}
+    <div className="flex justify-between mt-6">
+      <Button 
+        variant="outline"
+        onClick={() => setEditMode(!editMode)}
+        className="button-secondary"
+      >
+        {editMode ? "Terminer l'édition" : "Modifier les scores"}
+      </Button>
+      <Button 
+        onClick={() => {
+          if (currentPlayer < playerCount - 1) {
+            setCurrentPlayer(currentPlayer + 1)
+          } else {
+            setCurrentPlayer(0)
+            if (currentRound < 7) {
+              setCurrentRound(currentRound + 1)
+            } else {
+              setGameEnded(true)
+            }
+          }
+        }}
+        className="button-primary"
+      >
+        {currentRound === 7 && currentPlayer === playerCount - 1 
+          ? "Terminer la partie" 
+          : "Joueur suivant"
+        }
+      </Button>
+    </div>
+  </CardContent>
+</Card>
             </motion.div>
           )}
         </AnimatePresence>
