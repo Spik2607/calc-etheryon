@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
+// Constants
 const elements = [
   { name: 'Eau', icon: '💧', color: 'text-blue-500', label: '⚈' },
   { name: 'Feu', icon: '🔥', color: 'text-red-500', label: '🔥' },
@@ -22,6 +23,7 @@ const MAX_TEAMS = 4
 const EtheryonCalculator = () => {
   // États de base
   const [gameStarted, setGameStarted] = useState(false)
+  const [gameEnded, setGameEnded] = useState(false)
   const [playerCount, setPlayerCount] = useState(3)
   const [playerNames, setPlayerNames] = useState(Array(MAX_PLAYERS).fill(''))
   const [currentPlayer, setCurrentPlayer] = useState(0)
@@ -36,7 +38,7 @@ const EtheryonCalculator = () => {
   // États pour la maîtrise
   const [masteryBonus, setMasteryBonus] = useState(Array(MAX_ROUNDS).fill(-1))
 
-  // Gestionnaires d'événements
+  // Gestion des joueurs et équipes
   const handlePlayerCountChange = useCallback((count) => {
     setPlayerCount(count)
     setPlayerNames(prev => {
@@ -63,6 +65,7 @@ const EtheryonCalculator = () => {
     })
   }, [])
 
+  // Gestion du jeu
   const startGame = useCallback(() => {
     setElementScores(Array(playerCount).fill().map(() => 
       Array(MAX_ROUNDS).fill().map(() => Array(elements.length).fill(0))
@@ -70,8 +73,30 @@ const EtheryonCalculator = () => {
     setScores(Array(playerCount).fill().map(() => Array(MAX_ROUNDS).fill(0)))
     setMasteryBonus(Array(MAX_ROUNDS).fill(-1))
     setGameStarted(true)
+    setGameEnded(false)
+    setCurrentPlayer(0)
+    setCurrentRound(1)
   }, [playerCount])
 
+  const resetGame = useCallback(() => {
+    setGameStarted(false)
+    setGameEnded(false)
+    setCurrentPlayer(0)
+    setCurrentRound(1)
+    setScores([])
+    setElementScores([])
+    setMasteryBonus(Array(MAX_ROUNDS).fill(-1))
+    setPlayerNames(Array(MAX_PLAYERS).fill(''))
+    setTeams(Array(MAX_PLAYERS).fill(0))
+    setTeamMode(false)
+    setPlayerCount(3)
+  }, [])
+
+  const isGameOver = useCallback(() => {
+    return currentRound === MAX_ROUNDS && currentPlayer === playerCount - 1
+  }, [currentRound, currentPlayer, playerCount])
+
+  // Calculs des scores
   const calculateFinalScore = useCallback((elementScores) => {
     if (!elementScores || elementScores.length === 0) return 0
     const maxElement = Math.max(...elementScores)
@@ -152,10 +177,9 @@ const EtheryonCalculator = () => {
     }
   }, [])
 
-  // Calculs et utilitaires
+  // Calculs des totaux et gestion du gagnant
   const calculateTotal = useCallback((playerIndex) => {
-    let total = (scores[playerIndex] || []).reduce((sum, score) => sum + (score || 0), 0)
-    return total
+    return (scores[playerIndex] || []).reduce((sum, score) => sum + (score || 0), 0)
   }, [scores])
 
   const calculateTeamTotal = useCallback((teamNumber) => {
@@ -167,6 +191,43 @@ const EtheryonCalculator = () => {
     }, 0)
   }, [teams, calculateTotal, playerNames])
 
+  const getWinner = useCallback(() => {
+    if (teamMode) {
+      const teamScores = {}
+      for (let i = 1; i <= MAX_TEAMS; i++) {
+        teamScores[i] = calculateTeamTotal(i)
+      }
+      const maxScore = Math.max(...Object.values(teamScores))
+      const winningTeams = Object.entries(teamScores)
+        .filter(([_, score]) => score === maxScore)
+        .map(([team]) => `Équipe ${team}`)
+      return winningTeams.join(' et ')
+    } else {
+      const totals = playerNames.slice(0, playerCount).map((_, index) => calculateTotal(index))
+      const maxScore = Math.max(...totals)
+      const winners = playerNames
+        .filter((_, index) => calculateTotal(index) === maxScore)
+      return winners.join(' et ')
+    }
+  }, [teamMode, calculateTeamTotal, playerNames, playerCount, calculateTotal])
+
+  const handleNextTurn = useCallback(() => {
+    if (isGameOver()) {
+      setGameEnded(true)
+      return
+    }
+
+    if (currentPlayer < playerCount - 1) {
+      setCurrentPlayer(prev => prev + 1)
+    } else {
+      setCurrentPlayer(0)
+      if (currentRound < MAX_ROUNDS) {
+        setCurrentRound(prev => prev + 1)
+      }
+    }
+  }, [currentPlayer, playerCount, currentRound, isGameOver])
+
+  // Rendu des composants
   const renderSetupScreen = () => (
     <div className="calculator-container">
       <div className="game-section">
@@ -245,29 +306,31 @@ const EtheryonCalculator = () => {
       <div className="game-section">
         <h2 className="medieval-title flex items-center justify-center gap-2 mb-6">
           <Crown className="h-6 w-6" />
-          Tour de {playerNames[currentPlayer]} - Manche {currentRound}
+          {gameEnded ? "Résultats finaux" : `Tour de ${playerNames[currentPlayer]} - Manche ${currentRound}`}
         </h2>
 
-        <div className="elements-grid">
-          {elements.map((element, index) => (
-            <div key={index} className="element-input">
-              <span className={`element-icon ${element.color}`}>{element.label}</span>
-              <span className="element-name">{element.name}</span>
-              <Input
-                type="number"
-                min="0"
-                value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
-                onChange={(e) => handleElementScoreChange(
-                  currentPlayer,
-                  currentRound - 1,
-                  index,
-                  e.target.value
-                )}
-                className="medieval-input"
-              />
-            </div>
-          ))}
-        </div>
+        {!gameEnded && (
+          <div className="elements-grid">
+            {elements.map((element, index) => (
+              <div key={index} className="element-input">
+                <span className={`element-icon ${element.color}`}>{element.label}</span>
+                <span className="element-name">{element.name}</span>
+                <Input
+                  type="number"
+                  min="0"
+                  value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
+                  onChange={(e) => handleElementScoreChange(
+                    currentPlayer,
+                    currentRound - 1,
+                    index,
+                    e.target.value
+                  )}
+                  className="medieval-input"
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <table className="scores-table mt-6">
           <thead>
@@ -281,7 +344,7 @@ const EtheryonCalculator = () => {
           </thead>
           <tbody>
             {playerNames.slice(0, playerCount).map((player, playerIndex) => (
-              <tr key={playerIndex}>
+              <tr key={playerIndex} className={currentPlayer === playerIndex && !gameEnded ? 'current-player' : ''}>
                 <td className="player-name">
                   {player} {teamMode && `(Équipe ${teams[playerIndex]})`}
                 </td>
@@ -291,6 +354,7 @@ const EtheryonCalculator = () => {
                       {scores[playerIndex]?.[roundIndex] || 0}
                       <button
                         onClick={() => toggleMasteryBonus(roundIndex, playerIndex)}
+                        disabled={gameEnded}
                         className={`mastery-button ${
                           masteryBonus[roundIndex] === playerIndex ? 'active' : ''
                         }`}
@@ -322,23 +386,22 @@ const EtheryonCalculator = () => {
           </tbody>
         </table>
 
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={() => {
-              if (currentPlayer < playerCount - 1) {
-                setCurrentPlayer(currentPlayer + 1)
-              } else {
-                setCurrentPlayer(0)
-                if (currentRound < MAX_ROUNDS) {
-                  setCurrentRound(currentRound + 1)
-                }
-              }
-            }}
-            className="medieval-button"
-          >
-            {currentPlayer < playerCount - 1 ? 'Joueur suivant' : 'Manche suivante'}
-          </button>
-        </div>
+        {gameEnded ? (
+          <div className="mt-6 text-center">
+            <h3 className="text-xl font-bold mb-4">
+              {teamMode ? "Équipe gagnante" : "Gagnant"} : {getWinner()}
+            </h3>
+            <button onClick={resetGame} className="medieval-button">
+              Nouvelle partie
+            </button>
+          </div>
+        ) : (
+          <div className="flex justify-end mt-4">
+            <button onClick={handleNextTurn} className="medieval-button">
+              {currentPlayer < playerCount - 1 ? 'Joueur suivant' : 'Manche suivante'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
