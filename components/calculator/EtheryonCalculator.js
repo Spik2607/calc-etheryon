@@ -1,48 +1,42 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Image from 'next/image'
-import { Card } from '@/components/ui/card'
+import { Shield, Sword, Crown, Star, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Shield, Sword, Star, Crown, Heart } from 'lucide-react'
 
-// Configuration des éléments
 const elements = [
-  { name: 'Eau', icon: '💧', bgColor: 'bg-blue-500', textColor: 'text-white' },
-  { name: 'Feu', icon: '🔥', bgColor: 'bg-red-500', textColor: 'text-white' },
-  { name: 'Terre', icon: '🌍', bgColor: 'bg-green-500', textColor: 'text-white' },
-  { name: 'Air', icon: '🌪️', bgColor: 'bg-gray-500', textColor: 'text-white' },
-  { name: 'Foudre', icon: '⚡', bgColor: 'bg-yellow-500', textColor: 'text-black' }
+  { name: 'Eau', icon: '💧', color: 'text-blue-500', label: '⚈' },
+  { name: 'Feu', icon: '🔥', color: 'text-red-500', label: '🔥' },
+  { name: 'Terre', icon: '🌍', color: 'text-green-500', label: '◉' },
+  { name: 'Air', icon: '🌪️', color: 'text-gray-500', label: '☁' },
+  { name: 'Foudre', icon: '⚡', color: 'text-yellow-500', label: '⚡' }
 ]
 
 const MAX_PLAYERS = 8
 const MAX_ROUNDS = 7
 const MASTERY_BONUS = 15
-
-// Animations
-const pageTransition = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-  transition: { duration: 0.3 }
-}
+const MAX_TEAMS = 4
 
 const EtheryonCalculator = () => {
-  // États du jeu
+  // États de base
   const [gameStarted, setGameStarted] = useState(false)
-  const [gameEnded, setGameEnded] = useState(false)
   const [playerCount, setPlayerCount] = useState(3)
   const [playerNames, setPlayerNames] = useState(Array(MAX_PLAYERS).fill(''))
-  const [elementScores, setElementScores] = useState([])
   const [currentPlayer, setCurrentPlayer] = useState(0)
   const [currentRound, setCurrentRound] = useState(1)
   const [scores, setScores] = useState([])
+  const [elementScores, setElementScores] = useState([])
+  
+  // États pour le mode équipe
+  const [teamMode, setTeamMode] = useState(false)
+  const [teams, setTeams] = useState(Array(MAX_PLAYERS).fill(0))
+  
+  // États pour la maîtrise
   const [masteryBonus, setMasteryBonus] = useState(Array(MAX_ROUNDS).fill(-1))
 
-  // Gestionnaires d'événements optimisés
+  // Gestionnaires d'événements
   const handlePlayerCountChange = useCallback((count) => {
     setPlayerCount(count)
     setPlayerNames(prev => {
@@ -50,6 +44,7 @@ const EtheryonCalculator = () => {
       newNames.length = count
       return newNames.fill('', prev.length, count)
     })
+    setTeams(Array(count).fill(0))
   }, [])
 
   const handlePlayerNameChange = useCallback((index, name) => {
@@ -57,6 +52,14 @@ const EtheryonCalculator = () => {
       const newNames = [...prev]
       newNames[index] = name
       return newNames
+    })
+  }, [])
+
+  const handleTeamChange = useCallback((index, teamNumber) => {
+    setTeams(prev => {
+      const newTeams = [...prev]
+      newTeams[index] = teamNumber
+      return newTeams
     })
   }, [])
 
@@ -104,243 +107,243 @@ const EtheryonCalculator = () => {
   }, [calculateFinalScore, elementScores])
 
   const toggleMasteryBonus = useCallback((roundIndex, playerIndex) => {
-    setMasteryBonus(prev => {
-      const newMasteryBonus = [...prev]
-      if (newMasteryBonus[roundIndex] === playerIndex) {
-        newMasteryBonus[roundIndex] = -1
-      } else {
-        if (newMasteryBonus[roundIndex] !== -1) {
+    if (masteryBonus[roundIndex] === playerIndex) {
+      // Retirer le bonus
+      setMasteryBonus(prev => {
+        const newBonus = [...prev]
+        newBonus[roundIndex] = -1
+        return newBonus
+      })
+      
+      setScores(prev => prev.map((playerScores, pIndex) => 
+        pIndex === playerIndex
+          ? playerScores.map((score, rIndex) => 
+              rIndex === roundIndex ? score - MASTERY_BONUS : score
+            )
+          : playerScores
+      ))
+    } else {
+      // Ajouter le bonus au nouveau joueur et le retirer de l'ancien si nécessaire
+      setMasteryBonus(prev => {
+        const newBonus = [...prev]
+        const oldBonusPlayer = newBonus[roundIndex]
+        
+        if (oldBonusPlayer !== -1) {
           setScores(prevScores => prevScores.map((playerScores, pIndex) => 
-            pIndex === newMasteryBonus[roundIndex]
+            pIndex === oldBonusPlayer
               ? playerScores.map((score, rIndex) => 
                   rIndex === roundIndex ? score - MASTERY_BONUS : score
                 )
               : playerScores
           ))
         }
-        newMasteryBonus[roundIndex] = playerIndex
-      }
-      return newMasteryBonus
-    })
+        
+        newBonus[roundIndex] = playerIndex
+        return newBonus
+      })
+      
+      setScores(prev => prev.map((playerScores, pIndex) => 
+        pIndex === playerIndex
+          ? playerScores.map((score, rIndex) => 
+              rIndex === roundIndex ? score + MASTERY_BONUS : score
+            )
+          : playerScores
+      ))
+    }
+  }, [])
 
-    setScores(prev => prev.map((playerScores, pIndex) => 
-      pIndex === playerIndex
-        ? playerScores.map((score, rIndex) => 
-            rIndex === roundIndex 
-              ? score + (masteryBonus[roundIndex] === playerIndex ? -MASTERY_BONUS : MASTERY_BONUS)
-              : score
-          )
-        : playerScores
-    ))
-  }, [masteryBonus])
-
+  // Calculs et utilitaires
   const calculateTotal = useCallback((playerIndex) => {
-    return scores[playerIndex]?.reduce((sum, score) => sum + (score || 0), 0) || 0
+    let total = (scores[playerIndex] || []).reduce((sum, score) => sum + (score || 0), 0)
+    return total
   }, [scores])
 
-  const nextTurn = useCallback(() => {
-    if (currentPlayer < playerCount - 1) {
-      setCurrentPlayer(prev => prev + 1)
-    } else {
-      setCurrentPlayer(0)
-      if (currentRound < MAX_ROUNDS) {
-        setCurrentRound(prev => prev + 1)
-      } else {
-        setGameEnded(true)
+  const calculateTeamTotal = useCallback((teamNumber) => {
+    return playerNames.reduce((sum, _, playerIndex) => {
+      if (teams[playerIndex] === teamNumber) {
+        return sum + calculateTotal(playerIndex)
       }
-    }
-  }, [currentPlayer, playerCount, currentRound])
+      return sum
+    }, 0)
+  }, [teams, calculateTotal, playerNames])
 
-  // Composants de rendu mémorisés
-  const ScoreBoard = useMemo(() => (
-    <div className="bg-parchment rounded-lg shadow-lg border-2 border-brown-900">
-      <div className="bg-brown-900 text-parchment p-4 rounded-t-lg">
-        <h2 className="text-xl font-medieval text-center flex items-center justify-center gap-2">
-          <Crown className="h-5 w-5" />
-          Tableau des Scores
+  const renderSetupScreen = () => (
+    <div className="calculator-container">
+      <div className="game-section">
+        <h2 className="medieval-title flex items-center justify-center gap-2 mb-6">
+          <Users className="h-6 w-6" />
+          Configuration de la partie
         </h2>
-      </div>
-      <div className="p-4 overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b-2 border-brown-800">
-              <th className="p-2 text-left">Joueur</th>
-              {Array.from({ length: MAX_ROUNDS }, (_, i) => (
-                <th key={i} className="p-2 text-center">M{i + 1}</th>
+        
+        <div className="space-y-6">
+          <div>
+            <label className="medieval-label block mb-2">Nombre de joueurs :</label>
+            <div className="flex flex-wrap gap-2">
+              {[2, 3, 4, 5, 6, 7, 8].map((count) => (
+                <button
+                  key={count}
+                  onClick={() => handlePlayerCountChange(count)}
+                  className={`medieval-button ${playerCount === count ? 'medieval-button-active' : ''}`}
+                >
+                  {count}
+                </button>
               ))}
-              <th className="p-2 text-center">Total</th>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              checked={teamMode}
+              onChange={(e) => setTeamMode(e.target.checked)}
+              className="medieval-checkbox"
+              id="teamMode"
+            />
+            <label htmlFor="teamMode" className="medieval-label">Mode équipe</label>
+          </div>
+
+          <ScrollArea className="h-64 medieval-scroll">
+            {playerNames.slice(0, playerCount).map((name, index) => (
+              <div key={index} className="mb-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={`Nom du joueur ${index + 1}`}
+                    value={name}
+                    onChange={(e) => handlePlayerNameChange(index, e.target.value)}
+                    className="medieval-input"
+                  />
+                  {teamMode && (
+                    <select
+                      value={teams[index]}
+                      onChange={(e) => handleTeamChange(index, parseInt(e.target.value))}
+                      className="medieval-select"
+                    >
+                      {Array.from({length: MAX_TEAMS}, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>Équipe {num}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+            ))}
+          </ScrollArea>
+
+          <button
+            onClick={startGame}
+            disabled={playerNames.slice(0, playerCount).some(name => !name)}
+            className="medieval-button w-full"
+          >
+            Commencer la partie
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderGameScreen = () => (
+    <div className="calculator-container">
+      <div className="game-section">
+        <h2 className="medieval-title flex items-center justify-center gap-2 mb-6">
+          <Crown className="h-6 w-6" />
+          Tour de {playerNames[currentPlayer]} - Manche {currentRound}
+        </h2>
+
+        <div className="elements-grid">
+          {elements.map((element, index) => (
+            <div key={index} className="element-input">
+              <span className={`element-icon ${element.color}`}>{element.label}</span>
+              <span className="element-name">{element.name}</span>
+              <Input
+                type="number"
+                min="0"
+                value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
+                onChange={(e) => handleElementScoreChange(
+                  currentPlayer,
+                  currentRound - 1,
+                  index,
+                  e.target.value
+                )}
+                className="medieval-input"
+              />
+            </div>
+          ))}
+        </div>
+
+        <table className="scores-table mt-6">
+          <thead>
+            <tr>
+              <th>Joueur</th>
+              {Array.from({length: MAX_ROUNDS}, (_, i) => (
+                <th key={i}>M{i + 1}</th>
+              ))}
+              <th>Total</th>
             </tr>
           </thead>
           <tbody>
             {playerNames.slice(0, playerCount).map((player, playerIndex) => (
-              <tr 
-                key={playerIndex}
-                className={`
-                  border-b border-brown-300
-                  ${currentPlayer === playerIndex ? 'bg-brown-100/50' : ''}
-                  hover:bg-brown-50/50 transition-colors
-                `}
-              >
-                <td className="p-2 font-semibold">{player || `Joueur ${playerIndex + 1}`}</td>
-                {Array.from({ length: MAX_ROUNDS }, (_, roundIndex) => (
-                  <td key={roundIndex} className="p-2 text-center">
-                    <div className="relative flex flex-col items-center">
-                      <span className="font-medieval">
-                        {scores[playerIndex]?.[roundIndex] || 0}
-                      </span>
-                      {masteryBonus[roundIndex] === playerIndex && (
-                        <Star className="h-4 w-4 text-yellow-500 absolute -top-2 -right-2" />
-                      )}
+              <tr key={playerIndex}>
+                <td className="player-name">
+                  {player} {teamMode && `(Équipe ${teams[playerIndex]})`}
+                </td>
+                {Array.from({length: MAX_ROUNDS}, (_, roundIndex) => (
+                  <td key={roundIndex} className="score-cell">
+                    <div className="flex items-center justify-center gap-1">
+                      {scores[playerIndex]?.[roundIndex] || 0}
+                      <button
+                        onClick={() => toggleMasteryBonus(roundIndex, playerIndex)}
+                        className={`mastery-button ${
+                          masteryBonus[roundIndex] === playerIndex ? 'active' : ''
+                        }`}
+                      >
+                        <Star className={`h-4 w-4 ${
+                          masteryBonus[roundIndex] === playerIndex ? 'text-yellow-500' : 'text-gray-400'
+                        }`} />
+                      </button>
                     </div>
                   </td>
                 ))}
-                <td className="p-2 text-center font-bold">
+                <td className="total-score">
                   {calculateTotal(playerIndex)}
                 </td>
               </tr>
             ))}
+            {teamMode && (
+              <tr className="team-totals">
+                <td colSpan={MAX_ROUNDS + 1}>Totaux par équipe</td>
+                <td>
+                  {Array.from({length: MAX_TEAMS}, (_, i) => i + 1).map(teamNum => (
+                    <div key={teamNum}>
+                      Équipe {teamNum}: {calculateTeamTotal(teamNum)}
+                    </div>
+                  ))}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={() => {
+              if (currentPlayer < playerCount - 1) {
+                setCurrentPlayer(currentPlayer + 1)
+              } else {
+                setCurrentPlayer(0)
+                if (currentRound < MAX_ROUNDS) {
+                  setCurrentRound(currentRound + 1)
+                }
+              }
+            }}
+            className="medieval-button"
+          >
+            {currentPlayer < playerCount - 1 ? 'Joueur suivant' : 'Manche suivante'}
+          </button>
+        </div>
       </div>
     </div>
-  ), [playerNames, playerCount, currentPlayer, scores, masteryBonus, calculateTotal])
-
-  const ElementGrid = useMemo(() => (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      {elements.map((element, index) => (
-        <div 
-          key={index}
-          className="bg-parchment rounded-lg shadow-md border border-brown-300 overflow-hidden"
-        >
-          <div className={`${element.bgColor} ${element.textColor} p-2 text-center font-medieval flex items-center justify-center gap-2`}>
-            <span className="text-xl">{element.icon}</span>
-            <span>{element.name}</span>
-          </div>
-          <div className="p-4">
-            <Input
-              type="number"
-              min="0"
-              value={elementScores[currentPlayer]?.[currentRound - 1]?.[index] || 0}
-              onChange={(e) => handleElementScoreChange(
-                currentPlayer,
-                currentRound - 1,
-                index,
-                e.target.value
-              )}
-              className="w-full text-center font-medieval"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  ), [elementScores, currentPlayer, currentRound, handleElementScoreChange])
-
-  // Rendu principal
-  return (
-    <div className="min-h-screen bg-parchment-pattern">
-      <header className="bg-brown-900 text-parchment shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-medieval text-center flex items-center justify-center gap-4">
-            <Shield className="h-8 w-8" />
-            Calculatrice Etheryon
-            <Sword className="h-8 w-8" />
-          </h1>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <AnimatePresence mode="wait">
-          {!gameStarted ? (
-            <motion.div
-              key="setup"
-              {...pageTransition}
-              className="flex flex-col md:flex-row gap-8"
-            >
-              <div className="w-full md:w-2/3 bg-parchment rounded-lg shadow-lg border-2 border-brown-900 p-6">
-                <h2 className="text-2xl font-medieval text-center mb-6">Configuration de la Partie</h2>
-                
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-lg font-medieval mb-2">Nombre de joueurs :</label>
-                    <div className="flex flex-wrap gap-2">
-                      {[2, 3, 4, 5, 6, 7, 8].map((count) => (
-                        <Button
-                          key={count}
-                          onClick={() => handlePlayerCountChange(count)}
-                          variant={playerCount === count ? "default" : "outline"}
-                          className={`
-                            ${playerCount === count ? 'bg-brown-900 text-parchment' : 'border-brown-900'}
-                            font-medieval
-                          `}
-                        >
-                          {count}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <ScrollArea className="h-64 border rounded-lg p-4">
-                    {playerNames.slice(0, playerCount).map((name, index) => (
-                      <div key={index} className="mb-4">
-                        <Input
-                          placeholder={`Nom du joueur ${index + 1}`}
-                          value={name}
-                          onChange={(e) => handlePlayerNameChange(index, e.target.value)}
-                          className="w-full font-medieval"
-                        />
-                      </div>
-                    ))}
-                  </ScrollArea>
-
-                  <Button
-                    onClick={startGame}
-                    disabled={playerNames.slice(0, playerCount).some(name => !name)}
-                    className="w-full bg-brown-900 text-parchment hover:bg-brown-800 font-medieval"
-                  >
-                    Commencer la partie
-                  </Button>
-                </div>
-              </div>
-
-              <div className="w-full md:w-1/3">
-                {ScoreBoard}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="game"
-              {...pageTransition}
-              className="flex flex-col md:flex-row gap-8"
-            >
-              <div className="w-full md:w-2/3">
-                <div className="bg-parchment rounded-lg shadow-lg border-2 border-brown-900 p-6">
-                  <h2 className="text-2xl font-medieval text-center mb-6 flex items-center justify-center gap-2">
-                    <Heart className="h-6 w-6" />
-                    Tour de {playerNames[currentPlayer]} - Manche {currentRound}
-                  </h2>
-
-                  {ElementGrid}
-
-                  <div className="mt-6 flex justify-end">
-                    <Button
-                      onClick={nextTurn}
-                      className="bg-brown-900 text-parchment hover:bg-brown-800 font-medieval"
-                    >
-                      {currentPlayer < playerCount - 1 ? 'Joueur Suivant' : 'Manche Suivante'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full md:w-1/3">
-                {ScoreBoard}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-    </div>
   )
+
+  return gameStarted ? renderGameScreen() : renderSetupScreen()
 }
 
 export default EtheryonCalculator
